@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SVA Video Submission & Approval</title>
+    <title>SVA Media Submission & Approval</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -38,7 +38,7 @@
                 <div class="absolute top-0 left-0 w-full h-full opacity-10 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjIiIGZpbGw9IiNmZmYiLz48L3N2Zz4=')]"></div>
                 
                 <div class="relative z-10">
-                    <h2 class="text-3xl font-bold mb-4">SVA Video Approval Portal</h2>
+                    <h2 class="text-3xl font-bold mb-4">SVA Video and Audio Approval Portal</h2>
                     <p class="text-teal-100 mb-6 leading-relaxed text-sm sm:text-base">
                         Curating content that elevates our students' understanding, character, and worldview.
                     </p>
@@ -94,7 +94,7 @@
         <div id="content-card" class="bg-white rounded-xl shadow-lg border border-slate-200 p-6 sm:p-8 fade-in relative overflow-hidden">
             
             <div class="mb-8">
-                <h2 class="text-2xl font-bold text-slate-800 mb-4">Submit a Video for Approval</h2>
+                <h2 class="text-2xl font-bold text-slate-800 mb-4">Submit a Video/Audio for Approval</h2>
                 <div class="text-slate-600 leading-relaxed mb-6">
                     <p class="mb-4">As educators, the minds of our students are an <em>amanah</em> (sacred trust) placed in our hands. We must always strive to show our kids the absolute best there is, curating content that elevates their understanding, character, and worldview.</p>
                     <div class="bg-teal-50 border-l-4 border-teal-500 p-4 mb-4 text-sm text-teal-800">
@@ -106,7 +106,7 @@
 
             <form id="submission-form" onsubmit="submitVideo(event)" class="space-y-5">
                 <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-1">Video Link (YouTube, Drive, etc.)</label>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Video/Audio Link (YouTube, Drive, etc.)</label>
                     <input type="url" id="videoLink" required placeholder="https://" class="form-input">
                 </div>
 
@@ -142,8 +142,8 @@
             <div id="success-message" class="hidden text-center py-8">
                 <div class="text-5xl mb-4">✅</div>
                 <h3 class="text-xl font-bold text-teal-700 mb-2">JazakAllah Khair!</h3>
-                <p class="text-slate-600 mb-6">Your video has been successfully submitted for review. A confirmation email has been sent to your inbox.</p>
-                <button onclick="resetForm()" class="text-teal-600 font-semibold hover:text-teal-800 underline">Submit another video</button>
+                <p class="text-slate-600 mb-6">Your video/Audio has been successfully submitted for review. A confirmation email has been sent to your inbox.</p>
+                <button onclick="resetForm()" class="text-teal-600 font-semibold hover:text-teal-800 underline">Submit another video/Audio</button>
             </div>
 
         </div>
