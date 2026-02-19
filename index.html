@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SVA Video Submission & Approval</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Form Input Styling */
+        .form-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid #cbd5e1;
+            background-color: #ffffff;
+            transition: all 0.2s;
+        }
+        .form-input:focus {
+            outline: none;
+            border-color: #0d9488;
+            box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased">
+
+    <div id="view-login" class="fixed inset-0 z-50 bg-slate-900 flex flex-col items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center border-t-4 border-teal-600">
+            <div class="w-16 h-16 bg-teal-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-teal-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+            </div>
+            <h1 class="text-2xl font-bold text-slate-800 mb-2">SVA Video Approval</h1>
+            <p class="text-slate-500 mb-8 text-sm">Staff Portal for Educational Content</p>
+            
+            <div id="g_id_onload"
+                 data-client_id="14216824305-v19ecsmrhk1muaglrlhjceqjk5oeqr4n.apps.googleusercontent.com"
+                 data-callback="handleCredentialResponse"
+                 data-auto_select="false">
+            </div>
+            <div class="g_id_signin" data-type="standard" data-size="large" data-theme="filled_blue" data-text="sign_in_with" data-shape="rectangular" data-logo_alignment="center"></div>
+        </div>
+    </div>
+
+    <div id="view-app" class="hidden min-h-screen max-w-3xl mx-auto p-4 sm:p-8">
+        
+        <header class="flex justify-between items-center mb-8 bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+            <div>
+                <h1 class="text-lg font-bold text-teal-800">Content Submission</h1>
+                <p class="text-xs text-slate-500" id="user-display">Verifying user...</p>
+            </div>
+            <div class="text-right">
+                <button onclick="logout()" class="text-sm text-slate-500 hover:text-slate-800 transition">Sign Out</button>
+            </div>
+        </header>
+
+        <div id="content-card" class="bg-white rounded-xl shadow-lg border border-slate-200 p-6 sm:p-8 fade-in relative overflow-hidden">
+            
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold text-slate-800 mb-4">Submit a Video for Approval</h2>
+                <div class="text-slate-600 leading-relaxed mb-6">
+                    <p class="mb-4">As educators, the minds of our students are an <em>amanah</em> (sacred trust) placed in our hands. We must always strive to show our kids the absolute best there is, curating content that elevates their understanding, character, and worldview.</p>
+                    <div class="bg-teal-50 border-l-4 border-teal-500 p-4 mb-4 text-sm text-teal-800">
+                        <strong>Guidelines:</strong> Please ensure all submitted videos directly benefit the students' academic or spiritual growth. <strong>PG-13 content is strictly not allowed.</strong>
+                    </div>
+                    <p>Use the form below to submit a video for administrative review. We appreciate your dedication to maintaining a pure and enriching learning environment!</p>
+                </div>
+            </div>
+
+            <form id="submission-form" onsubmit="submitVideo(event)" class="space-y-5">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Video Link (YouTube, Drive, etc.)</label>
+                    <input type="url" id="videoLink" required placeholder="https://" class="form-input">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Target Grade Level</label>
+                    <select id="gradeLevel" required class="form-input bg-white">
+                        <option value="" disabled selected>Select appropriate grade...</option>
+                        <option value="PreK">Pre-K</option>
+                        <option value="Kindergarten">Kindergarten</option>
+                        <option value="1st Grade">1st Grade</option>
+                        <option value="2nd Grade">2nd Grade</option>
+                        <option value="3rd Grade">3rd Grade</option>
+                        <option value="4th Grade">4th Grade</option>
+                        <option value="5th Grade">5th Grade</option>
+                        <option value="6th Grade">6th Grade</option>
+                        <option value="7th Grade">7th Grade</option>
+                        <option value="8th Grade">8th Grade</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Benefit to Students</label>
+                    <textarea id="videoBenefit" required rows="3" placeholder="Explain how watching this video will benefit the students..." class="form-input"></textarea>
+                </div>
+
+                <div class="pt-4">
+                    <button type="submit" id="submit-btn" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 rounded-lg shadow-md transition transform active:scale-95 flex justify-center items-center">
+                        Submit Video for Review
+                    </button>
+                </div>
+            </form>
+
+            <div id="success-message" class="hidden text-center py-8">
+                <div class="text-5xl mb-4">✅</div>
+                <h3 class="text-xl font-bold text-teal-700 mb-2">JazakAllah Khair!</h3>
+                <p class="text-slate-600 mb-6">Your video has been successfully submitted for review. A confirmation email has been sent to your inbox.</p>
+                <button onclick="resetForm()" class="text-teal-600 font-semibold hover:text-teal-800 underline">Submit another video</button>
+            </div>
+
+        </div>
+    </div>
+
+<script>
+    // ==========================================
+    // CONFIGURATION
+    // ==========================================
+    const BACKEND_URL = "https://script.google.com/macros/s/AKfycbzBMSTDNsgg9c6rM_YbVx9j4Z4CqUSZMyMA5GricFU1YMVsHY-L8K_MS_nVi455f2fi/exec"; 
+    
+    let USER_TOKEN = ""; 
+    let USER_EMAIL = "";
+
+    // ==========================================
+    // AUTH LOGIC
+    // ==========================================
+    function handleCredentialResponse(response) {
+        USER_TOKEN = response.credential; 
+        const payload = JSON.parse(atob(response.credential.split('.')[1]));
+        USER_EMAIL = payload.email;
+        
+        document.getElementById('view-login').classList.add('hidden');
+        document.getElementById('view-app').classList.remove('hidden');
+        document.getElementById('user-display').innerText = USER_EMAIL;
+    }
+
+    function logout() {
+        USER_TOKEN = "";
+        USER_EMAIL = "";
+        document.getElementById('view-app').classList.add('hidden');
+        document.getElementById('view-login').classList.remove('hidden');
+        resetForm();
+    }
+
+    // ==========================================
+    // APP LOGIC
+    // ==========================================
+    function submitVideo(e) {
+        e.preventDefault();
+        
+        if (!USER_TOKEN) {
+            alert("Authentication error. Please refresh and log in again.");
+            return;
+        }
+
+        const link = document.getElementById('videoLink').value;
+        const grade = document.getElementById('gradeLevel').value;
+        const benefit = document.getElementById('videoBenefit').value;
+        const submitBtn = document.getElementById('submit-btn');
+
+        // Loading state
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Processing...`;
+
+        fetch(BACKEND_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                token: USER_TOKEN, 
+                videoLink: link,
+                gradeLevel: grade,
+                videoBenefit: benefit
+            })
+        }).then(() => {
+            // Show success UI
+            document.getElementById('submission-form').classList.add('hidden');
+            document.getElementById('success-message').classList.remove('hidden');
+            
+            // Reset button state
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = `Submit Video for Review`;
+        }).catch(err => {
+            console.error(err);
+            alert("There was an issue submitting your video. Please try again.");
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = `Submit Video for Review`;
+        });
+    }
+
+    function resetForm() {
+        document.getElementById('submission-form').reset();
+        document.getElementById('submission-form').classList.remove('hidden');
+        document.getElementById('success-message').classList.add('hidden');
+    }
+</script>
+
+</body>
+</html>
