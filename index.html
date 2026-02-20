@@ -328,7 +328,7 @@
         feed.innerHTML = html;
     }
 
-    // Converts standard YouTube/Vimeo links to Embed IFrames
+   /** // Converts standard YouTube/Vimeo links to Embed IFrames
     function getEmbedUrl(url) {
         if (!url) return null;
         try {
@@ -344,6 +344,29 @@
                     videoId = url.split('v=')[1]?.split('&')[0];
                 }
                 return `https://www.youtube.com/embed/${videoId}`;
+            }
+        } catch(e) { return null; }
+        return null; // Return null if it's a drive link or unknown format
+    } */
+
+    // Converts standard YouTube/Vimeo/PBS links to Embed IFrames
+    function getEmbedUrl(url) {
+        if (!url) return null;
+        try {
+            if (url.includes('vimeo.com')) {
+                const vimeoId = url.split('/').pop().split('?')[0];
+                return `https://player.vimeo.com/video/${vimeoId}`;
+            } else if (url.includes('youtube.com') || url.includes('youtu.be')) {
+                let videoId = '';
+                if (url.includes('youtu.be')) {
+                    videoId = url.split('youtu.be/')[1].split('?')[0];
+                } else {
+                    videoId = url.split('v=')[1]?.split('&')[0];
+                }
+                return `https://www.youtube.com/embed/${videoId}`;
+            } else if (url.includes('player.pbs.org')) {
+                // Accepts PBS Viral Player links natively
+                return url; 
             }
         } catch(e) { return null; }
         return null; // Return null if it's a drive link or unknown format
