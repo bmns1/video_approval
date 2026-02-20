@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SVA Media Submission & Approval</title>
+    <title>SVA Media Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -13,7 +13,6 @@
         .fade-in { animation: fadeIn 0.4s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* Form Input Styling */
         .form-input {
             width: 100%;
             padding: 0.75rem 1rem;
@@ -27,18 +26,33 @@
             border-color: #0d9488;
             box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
         }
+        
+        /* Navigation Tab Styling */
+        .tab-btn {
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            color: #64748b;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .tab-btn.active {
+            color: #0d9488;
+            border-bottom: 2px solid #0d9488;
+        }
+        .tab-btn:hover:not(.active) {
+            color: #334155;
+            border-bottom: 2px solid #cbd5e1;
+        }
     </style>
 </head>
 <body class="text-slate-800 antialiased">
 
     <div id="view-login" class="fixed inset-0 z-50 bg-slate-100 flex items-center justify-center p-4 sm:p-8">
         <div class="bg-white flex flex-col md:flex-row w-full max-w-4xl rounded-2xl shadow-xl overflow-hidden border border-slate-200 fade-in">
-            
             <div class="w-full md:w-1/2 bg-teal-700 p-10 text-white flex flex-col justify-center relative overflow-hidden">
                 <div class="absolute top-0 left-0 w-full h-full opacity-10 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjIiIGZpbGw9IiNmZmYiLz48L3N2Zz4=')]"></div>
-                
                 <div class="relative z-10">
-                    <h2 class="text-3xl font-bold mb-4">SVA Video and Audio Approval Portal</h2>
+                    <h2 class="text-3xl font-bold mb-4">SVA Video & Audio Portal</h2>
                     <p class="text-teal-100 mb-6 leading-relaxed text-sm sm:text-base">
                         Curating content that elevates our students' understanding, character, and worldview.
                     </p>
@@ -49,71 +63,45 @@
                     </div>
                 </div>
             </div>
-
             <div class="w-full md:w-1/2 p-10 sm:p-14 flex flex-col justify-center items-center bg-white text-center">
                 <div class="w-16 h-16 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-center mb-6 shadow-sm">
                     <svg class="w-8 h-8 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
                 </div>
-                
                 <h1 class="text-2xl font-bold text-slate-800 mb-2">Secure Sign In</h1>
                 <p class="text-slate-500 mb-8 text-sm leading-relaxed">
-                    Please use your official <strong>@svaschool.org</strong> Workspace account to access the video approval system.
+                    Please use your official <strong>@svaschool.org</strong> Workspace account to access the library and submit videos.
                 </p>
-                
                 <div class="w-full flex justify-center">
-                    <div id="g_id_onload"
-                         data-client_id="14216824305-v19ecsmrhk1muaglrlhjceqjk5oeqr4n.apps.googleusercontent.com"
-                         data-callback="handleCredentialResponse"
-                         data-auto_select="false">
-                    </div>
-                    <div class="g_id_signin" 
-                         data-type="standard" 
-                         data-size="large" 
-                         data-theme="outline" 
-                         data-text="sign_in_with" 
-                         data-shape="rectangular" 
-                         data-logo_alignment="left">
-                    </div>
+                    <div id="g_id_onload" data-client_id="14216824305-v19ecsmrhk1muaglrlhjceqjk5oeqr4n.apps.googleusercontent.com" data-callback="handleCredentialResponse" data-auto_select="false"></div>
+                    <div class="g_id_signin" data-type="standard" data-size="large" data-theme="outline" data-text="sign_in_with" data-shape="rectangular" data-logo_alignment="left"></div>
                 </div>
             </div>
-            
         </div>
     </div>
-    <div id="view-app" class="hidden min-h-screen max-w-3xl mx-auto p-4 sm:p-8">
+
+    <div id="view-app" class="hidden min-h-screen max-w-4xl mx-auto p-4 sm:p-8">
         
-        <header class="flex justify-between items-center mb-8 bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-            <div>
-                <h1 class="text-lg font-bold text-teal-800">Content Submission</h1>
-                <p class="text-xs text-slate-500" id="user-display">Verifying user...</p>
-            </div>
-            <div class="text-right">
+        <header class="mb-6 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="flex justify-between items-center p-4 border-b border-slate-100">
+                <div>
+                    <h1 class="text-lg font-bold text-teal-800">SVA Media Portal</h1>
+                    <p class="text-xs text-slate-500" id="user-display">Verifying user...</p>
+                </div>
                 <button onclick="logout()" class="text-sm text-slate-500 hover:text-slate-800 transition">Sign Out</button>
+            </div>
+            
+            <div class="flex px-2 pt-2 bg-slate-50">
+                <button onclick="switchTab('library')" id="tab-btn-library" class="tab-btn active">Video Library</button>
+                <button onclick="switchTab('submit')" id="tab-btn-submit" class="tab-btn">Submit for Approval</button>
             </div>
         </header>
 
-        <div id="content-card" class="bg-white rounded-xl shadow-lg border border-slate-200 p-6 sm:p-8 fade-in relative overflow-hidden">
-            
-            <div class="mb-8">
-                <h2 class="text-2xl font-bold text-slate-800 mb-4">Submit a Video/Audio for Approval</h2>
-                <div class="text-slate-600 leading-relaxed mb-6">
-                    <p class="mb-4">As educators, the minds of our students are an <em>amanah</em> (sacred trust) placed in our hands. We must always strive to show our kids the absolute best there is, curating content that elevates their understanding, character, and worldview.</p>
-                    <div class="bg-teal-50 border-l-4 border-teal-500 p-4 mb-4 text-sm text-teal-800">
-                        <strong>Guidelines:</strong> Please ensure all submitted videos directly benefit the students' academic or spiritual growth. <strong>PG-13 content is strictly not allowed.</strong>
-                    </div>
-                    <p>Use the form below to submit a video for administrative review. We appreciate your dedication to maintaining a pure and enriching learning environment!</p>
-                </div>
-            </div>
-
-            <form id="submission-form" onsubmit="submitVideo(event)" class="space-y-5">
-                <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-1">Video/Audio Link (YouTube, Drive, etc.)</label>
-                    <input type="url" id="videoLink" required placeholder="https://" class="form-input">
-                </div>
-
-                <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-1">Target Grade Level</label>
-                    <select id="gradeLevel" required class="form-input bg-white">
-                        <option value="" disabled selected>Select appropriate grade...</option>
+        <div id="tab-library" class="fade-in">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
+                <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-2">
+                    <input type="text" id="filter-search" placeholder="Search titles..." class="form-input text-sm" oninput="applyFilters()">
+                    <select id="filter-grade" class="form-input text-sm" onchange="applyFilters()">
+                        <option value="">All Grades</option>
                         <option value="PreK">Pre-K</option>
                         <option value="Kindergarten">Kindergarten</option>
                         <option value="1st Grade">1st Grade</option>
@@ -125,27 +113,77 @@
                         <option value="7th Grade">7th Grade</option>
                         <option value="8th Grade">8th Grade</option>
                     </select>
+                    <input type="text" id="filter-by" placeholder="Submitted by (Email)..." class="form-input text-sm" oninput="applyFilters()">
+                    <select id="filter-sort" class="form-input text-sm" onchange="applyFilters()">
+                        <option value="newest">Newest First</option>
+                        <option value="oldest">Oldest First</option>
+                    </select>
                 </div>
-
-                <div>
-                    <label class="block text-sm font-semibold text-slate-700 mb-1">Benefit to Students</label>
-                    <textarea id="videoBenefit" required rows="3" placeholder="Explain how watching this video will benefit the students..." class="form-input"></textarea>
-                </div>
-
-                <div class="pt-4">
-                    <button type="submit" id="submit-btn" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 rounded-lg shadow-md transition transform active:scale-95 flex justify-center items-center">
-                        Submit Video for Review
-                    </button>
-                </div>
-            </form>
-
-            <div id="success-message" class="hidden text-center py-8">
-                <div class="text-5xl mb-4">✅</div>
-                <h3 class="text-xl font-bold text-teal-700 mb-2">JazakAllah Khair!</h3>
-                <p class="text-slate-600 mb-6">Your video/Audio has been successfully submitted for review. A confirmation email has been sent to your inbox.</p>
-                <button onclick="resetForm()" class="text-teal-600 font-semibold hover:text-teal-800 underline">Submit another video/Audio</button>
             </div>
 
+            <div id="video-feed" class="space-y-8 pb-10">
+                <div class="text-center py-10 text-slate-500">Loading approved videos...</div>
+            </div>
+        </div>
+
+        <div id="tab-submit" class="hidden fade-in">
+            <div class="bg-white rounded-xl shadow-lg border border-slate-200 p-6 sm:p-8 relative overflow-hidden">
+                <div class="mb-8">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-4">Submit Media for Approval</h2>
+                    <div class="text-slate-600 leading-relaxed mb-6">
+                        <div class="bg-teal-50 border-l-4 border-teal-500 p-4 mb-4 text-sm text-teal-800">
+                            <strong>Policy Reminder:</strong> No video or audio is allowed to be played outside this platform. Please submit your materials for Mona and Lina to review.
+                        </div>
+                    </div>
+                </div>
+
+                <form id="submission-form" onsubmit="submitVideo(event)" class="space-y-5">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">Video Title</label>
+                        <input type="text" id="videoTitle" required placeholder="e.g. Prophets of Islam Episode 1" class="form-input">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">Video/Audio Link (YouTube, Vimeo, Drive, etc.)</label>
+                        <input type="url" id="videoLink" required placeholder="https://" class="form-input">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">Target Grade Level</label>
+                        <select id="gradeLevel" required class="form-input bg-white">
+                            <option value="" disabled selected>Select appropriate grade...</option>
+                            <option value="PreK">Pre-K</option>
+                            <option value="Kindergarten">Kindergarten</option>
+                            <option value="1st Grade">1st Grade</option>
+                            <option value="2nd Grade">2nd Grade</option>
+                            <option value="3rd Grade">3rd Grade</option>
+                            <option value="4th Grade">4th Grade</option>
+                            <option value="5th Grade">5th Grade</option>
+                            <option value="6th Grade">6th Grade</option>
+                            <option value="7th Grade">7th Grade</option>
+                            <option value="8th Grade">8th Grade</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">Description & Benefit</label>
+                        <textarea id="videoBenefit" required rows="3" placeholder="Explain the reason for using this track/video..." class="form-input"></textarea>
+                    </div>
+
+                    <div class="pt-4">
+                        <button type="submit" id="submit-btn" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 rounded-lg shadow-md transition transform active:scale-95 flex justify-center items-center">
+                            Submit for Review
+                        </button>
+                    </div>
+                </form>
+
+                <div id="success-message" class="hidden text-center py-8">
+                    <div class="text-5xl mb-4">✅</div>
+                    <h3 class="text-xl font-bold text-teal-700 mb-2">JazakAllah Khair!</h3>
+                    <p class="text-slate-600 mb-6">Your media has been submitted to Mona and Lina for review.</p>
+                    <button onclick="resetForm()" class="text-teal-600 font-semibold hover:text-teal-800 underline">Submit another</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -157,9 +195,10 @@
     
     let USER_TOKEN = ""; 
     let USER_EMAIL = "";
+    let ALL_VIDEOS = []; // Stores the fetched videos for filtering
 
     // ==========================================
-    // AUTH LOGIC
+    // AUTH & TABS LOGIC
     // ==========================================
     function handleCredentialResponse(response) {
         USER_TOKEN = response.credential; 
@@ -169,6 +208,9 @@
         document.getElementById('view-login').classList.add('hidden');
         document.getElementById('view-app').classList.remove('hidden');
         document.getElementById('user-display').innerText = USER_EMAIL;
+        
+        // Load the video library on login
+        fetchVideos();
     }
 
     function logout() {
@@ -179,49 +221,171 @@
         resetForm();
     }
 
-    // ==========================================
-    // APP LOGIC
-    // ==========================================
-    function submitVideo(e) {
-        e.preventDefault();
+    function switchTab(tabName) {
+        // Update Buttons
+        document.getElementById('tab-btn-library').classList.remove('active');
+        document.getElementById('tab-btn-submit').classList.remove('active');
+        document.getElementById(`tab-btn-${tabName}`).classList.add('active');
         
-        if (!USER_TOKEN) {
-            alert("Authentication error. Please refresh and log in again.");
+        // Update Views
+        document.getElementById('tab-library').classList.add('hidden');
+        document.getElementById('tab-submit').classList.add('hidden');
+        document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+
+        if(tabName === 'library' && ALL_VIDEOS.length === 0) fetchVideos();
+    }
+
+    // ==========================================
+    // LIBRARY & VIDEO FEED LOGIC
+    // ==========================================
+    function fetchVideos() {
+        fetch(BACKEND_URL, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'getVideos', token: USER_TOKEN })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.status === 'success') {
+                ALL_VIDEOS = data.data;
+                applyFilters(); // Renders the initial feed
+            } else {
+                document.getElementById('video-feed').innerHTML = `<div class="text-red-500 text-center py-10">Error loading videos: ${data.message}</div>`;
+            }
+        })
+        .catch(err => {
+            document.getElementById('video-feed').innerHTML = `<div class="text-red-500 text-center py-10">Failed to connect to backend.</div>`;
+        });
+    }
+
+    function applyFilters() {
+        const search = document.getElementById('filter-search').value.toLowerCase();
+        const grade = document.getElementById('filter-grade').value;
+        const byEmail = document.getElementById('filter-by').value.toLowerCase();
+        const sortOrder = document.getElementById('filter-sort').value;
+
+        // Filter array
+        let filtered = ALL_VIDEOS.filter(v => {
+            const matchSearch = v.title.toLowerCase().includes(search) || v.description.toLowerCase().includes(search);
+            const matchGrade = grade === "" || v.grade === grade;
+            const matchEmail = v.by.toLowerCase().includes(byEmail);
+            return matchSearch && matchGrade && matchEmail;
+        });
+
+        // Sort array (Assuming timestamp is a valid date string)
+        filtered.sort((a, b) => {
+            const dateA = new Date(a.timestamp);
+            const dateB = new Date(b.timestamp);
+            return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
+        });
+
+        renderFeed(filtered);
+    }
+
+    function renderFeed(videos) {
+        const feed = document.getElementById('video-feed');
+        if (videos.length === 0) {
+            feed.innerHTML = `<div class="text-slate-500 text-center py-10 bg-white rounded-xl border border-slate-200">No videos found matching your filters.</div>`;
             return;
         }
 
+        let html = '';
+        videos.forEach(v => {
+            const embedUrl = getEmbedUrl(v.link);
+            const dateStr = new Date(v.timestamp).toLocaleDateString();
+            
+            // Build the player (iframe) or a button if we can't embed it
+            let mediaSection = '';
+            if (embedUrl) {
+                mediaSection = `
+                    <div class="relative w-full rounded-lg overflow-hidden bg-slate-100" style="padding-top: 56.25%;">
+                        <iframe class="absolute top-0 left-0 w-full h-full" src="${embedUrl}" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
+                    </div>`;
+            } else {
+                mediaSection = `
+                    <div class="bg-slate-100 p-6 rounded-lg text-center border border-slate-200">
+                        <p class="text-slate-500 mb-3 text-sm">This media type cannot be embedded directly.</p>
+                        <a href="${v.link}" target="_blank" class="bg-slate-800 text-white px-6 py-2 rounded-lg text-sm font-semibold hover:bg-slate-700">Open Media in New Tab</a>
+                    </div>`;
+            }
+
+            html += `
+                <div class="bg-white rounded-xl shadow-md border border-slate-200 overflow-hidden fade-in">
+                    ${mediaSection}
+                    <div class="p-6">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="text-xl font-bold text-slate-800">${v.title || "Untitled Video"}</h3>
+                            <span class="bg-teal-100 text-teal-800 text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap ml-4">${v.grade}</span>
+                        </div>
+                        <p class="text-sm text-slate-500 mb-4">Submitted by ${v.by} on ${dateStr}</p>
+                        <div class="bg-slate-50 p-4 rounded-lg border border-slate-100 text-sm text-slate-700">
+                            <strong>Description / Benefit:</strong><br>
+                            ${v.description}
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        feed.innerHTML = html;
+    }
+
+    // Converts standard YouTube/Vimeo links to Embed IFrames
+    function getEmbedUrl(url) {
+        if (!url) return null;
+        try {
+            if (url.includes('vimeo.com')) {
+                // e.g. https://vimeo.com/123456789
+                const vimeoId = url.split('/').pop().split('?')[0];
+                return `https://player.vimeo.com/video/${vimeoId}`;
+            } else if (url.includes('youtube.com') || url.includes('youtu.be')) {
+                let videoId = '';
+                if (url.includes('youtu.be')) {
+                    videoId = url.split('youtu.be/')[1].split('?')[0];
+                } else {
+                    videoId = url.split('v=')[1]?.split('&')[0];
+                }
+                return `https://www.youtube.com/embed/${videoId}`;
+            }
+        } catch(e) { return null; }
+        return null; // Return null if it's a drive link or unknown format
+    }
+
+    // ==========================================
+    // SUBMISSION LOGIC
+    // ==========================================
+    function submitVideo(e) {
+        e.preventDefault();
+        if (!USER_TOKEN) return alert("Authentication error. Please log in again.");
+
+        const title = document.getElementById('videoTitle').value;
         const link = document.getElementById('videoLink').value;
         const grade = document.getElementById('gradeLevel').value;
         const benefit = document.getElementById('videoBenefit').value;
         const submitBtn = document.getElementById('submit-btn');
 
-        // Loading state
         submitBtn.disabled = true;
-        submitBtn.innerHTML = `<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Processing...`;
+        submitBtn.innerHTML = `Processing...`;
 
         fetch(BACKEND_URL, {
             method: 'POST',
-            mode: 'no-cors',
+            mode: 'no-cors', // Keeps cross-origin fetch simple, though JSON response won't be readable
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
+                action: 'submit',
                 token: USER_TOKEN, 
+                videoTitle: title,
                 videoLink: link,
                 gradeLevel: grade,
                 videoBenefit: benefit
             })
         }).then(() => {
-            // Show success UI
             document.getElementById('submission-form').classList.add('hidden');
             document.getElementById('success-message').classList.remove('hidden');
-            
-            // Reset button state
             submitBtn.disabled = false;
-            submitBtn.innerHTML = `Submit Video for Review`;
+            submitBtn.innerHTML = `Submit for Review`;
         }).catch(err => {
-            console.error(err);
-            alert("There was an issue submitting your video. Please try again.");
+            alert("Issue submitting video. Try again.");
             submitBtn.disabled = false;
-            submitBtn.innerHTML = `Submit Video for Review`;
+            submitBtn.innerHTML = `Submit for Review`;
         });
     }
 
