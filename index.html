@@ -81,7 +81,7 @@
 
     <div id="view-app" class="hidden min-h-screen max-w-4xl mx-auto p-4 sm:p-8">
         
-        <header class="mb-6 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <header class="mb-4 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
             <div class="flex justify-between items-center p-4 border-b border-slate-100">
                 <div>
                     <h1 class="text-lg font-bold text-teal-800">SVA Media Portal</h1>
@@ -96,6 +96,11 @@
                 <button onclick="switchTab('submit')" id="tab-btn-submit" class="tab-btn">Submit for Approval</button>
             </div>
         </header>
+
+        <div class="bg-teal-50 border-l-4 border-teal-500 p-3 mb-6 text-sm text-teal-800 rounded-r-lg shadow-sm flex items-start">
+            <svg class="w-5 h-5 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
+            <p><strong>Accountability Notice:</strong> To ensure curriculum alignment and student safety, all portal logins and media playback events are securely logged.</p>
+        </div>
 
         <div id="tab-library" class="fade-in">
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
@@ -241,7 +246,32 @@
     let USER_TOKEN = ""; 
     let USER_EMAIL = "";
     let ALL_VIDEOS = []; 
-    let ALL_AUDIO = []; // Stores the fetched audio tracks
+    let ALL_AUDIO = []; 
+
+    // ==========================================
+    // TRACKING LOGIC
+    // ==========================================
+    function logActivity(trackTitle) {
+        if (!USER_TOKEN) return;
+        fetch(BACKEND_URL, {
+            method: 'POST',
+            mode: 'no-cors', 
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'track',
+                token: USER_TOKEN, 
+                trackTitle: trackTitle
+            })
+        });
+    }
+
+    function activateMedia(iframeId, overlayId, url, title) {
+        logActivity(title); // Log the play event
+        document.getElementById(overlayId).classList.add('hidden'); // Hide overlay
+        // Add autoplay parameter and start media
+        const separator = url.includes('?') ? '&' : '?';
+        document.getElementById(iframeId).src = url + separator + 'autoplay=1';
+    }
 
     // ==========================================
     // AUTH & TABS LOGIC
@@ -255,11 +285,13 @@
         document.getElementById('view-app').classList.remove('hidden');
         document.getElementById('user-display').innerText = USER_EMAIL;
         
-        // Load the video library on login
+        logActivity("System: User Logged In");
+        
         fetchVideos();
     }
 
     function logout() {
+        logActivity("System: User Logged Out");
         USER_TOKEN = "";
         USER_EMAIL = "";
         document.getElementById('view-app').classList.add('hidden');
@@ -280,7 +312,7 @@
         document.getElementById('tab-submit').classList.add('hidden');
         document.getElementById(`tab-${tabName}`).classList.remove('hidden');
 
-        // Fetch data if needed
+        // Fetch data if empty
         if(tabName === 'library' && ALL_VIDEOS.length === 0) fetchVideos();
         if(tabName === 'audio' && ALL_AUDIO.length === 0) fetchAudio();
     }
@@ -337,33 +369,47 @@
         }
 
         let html = '';
-        videos.forEach(v => {
+        videos.forEach((v, index) => {
             const embedUrl = getEmbedUrl(v.link);
             const dateStr = new Date(v.timestamp).toLocaleDateString();
+            const safeTitle = (v.title || "Untitled Video").replace(/'/g, "\\'").replace(/"/g, '&quot;');
             
             let mediaSection = '';
             if (embedUrl) {
+                const iframeId = `vid-iframe-${index}`;
+                const overlayId = `vid-overlay-${index}`;
+                
                 mediaSection = `
-                    <div class="relative w-full rounded-lg overflow-hidden bg-slate-100" style="padding-top: 56.25%;">
-                        <iframe class="absolute top-0 left-0 w-full h-full" src="${embedUrl}" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
+                    <div class="relative w-full rounded-lg overflow-hidden bg-slate-900" style="padding-top: 56.25%;">
+                        <div id="${overlayId}" class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-800 bg-opacity-80 hover:bg-opacity-90 transition cursor-pointer" onclick="activateMedia('${iframeId}', '${overlayId}', '${embedUrl}', '${safeTitle}')">
+                            <div class="w-16 h-16 bg-teal-600 rounded-full flex items-center justify-center mb-3 shadow-lg transform transition hover:scale-110">
+                                <svg class="w-8 h-8 text-white ml-1" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4l12 6-12 6z"></path></svg>
+                            </div>
+                            <span class="text-white font-semibold text-sm tracking-wide">Click to Play & Log</span>
+                        </div>
+                        <iframe id="${iframeId}" class="absolute top-0 left-0 w-full h-full" src="" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
                     </div>`;
             } else {
                 mediaSection = `
                     <div class="bg-slate-100 p-6 rounded-lg text-center border border-slate-200">
                         <p class="text-slate-500 mb-3 text-sm">This media type cannot be embedded directly.</p>
-                        <a href="${v.link}" target="_blank" class="bg-slate-800 text-white px-6 py-2 rounded-lg text-sm font-semibold hover:bg-slate-700">Open Media in New Tab</a>
+                        <a href="${v.link}" target="_blank" onclick="logActivity('${safeTitle} (Opened Externally)')" class="bg-slate-800 text-white px-6 py-2 rounded-lg text-sm font-semibold hover:bg-slate-700">Open Media in New Tab</a>
                     </div>`;
             }
 
             html += `
                 <div class="bg-white rounded-xl shadow-md border border-slate-200 overflow-hidden fade-in">
-                    ${mediaSection}
-                    <div class="p-6">
-                        <div class="flex justify-between items-start mb-2">
-                            <h3 class="text-xl font-bold text-slate-800">${v.title || "Untitled Video"}</h3>
+                    <div class="p-6 pb-4">
+                        <div class="flex justify-between items-start mb-4">
+                            <h3 class="text-xl font-bold text-slate-800">${safeTitle}</h3>
                             <span class="bg-teal-100 text-teal-800 text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap ml-4">${v.grade}</span>
                         </div>
                         <p class="text-sm text-slate-500 mb-4">Submitted by ${v.by} on ${dateStr}</p>
+                    </div>
+                    
+                    ${mediaSection}
+                    
+                    <div class="p-6 pt-4">
                         <div class="bg-slate-50 p-4 rounded-lg border border-slate-100 text-sm text-slate-700">
                             <strong>Description / Benefit:</strong><br>
                             ${v.description}
@@ -439,55 +485,6 @@
 
         renderAudioFeed(filtered);
     }
-/**
-    function renderAudioFeed(audioTracks) {
-        const feed = document.getElementById('audio-feed');
-        if (audioTracks.length === 0) {
-            feed.innerHTML = `<div class="text-slate-500 text-center py-10 bg-white rounded-xl border border-slate-200">No audio tracks found matching your filters.</div>`;
-            return;
-        }
-
-        let html = '';
-        audioTracks.forEach(a => {
-            const dateStr = new Date(a.timestamp).toLocaleDateString();
-            
-            // Format Google Drive links for direct audio streaming
-            let streamUrl = a.link;
-            if (streamUrl && streamUrl.includes('drive.google.com')) {
-                 const fileId = streamUrl.match(/[-\w]{25,}/);
-                 if (fileId) {
-                     streamUrl = `https://drive.google.com/uc?export=download&id=${fileId[0]}`;
-                 }
-            }
-
-            html += `
-                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden fade-in p-6">
-                    <div class="flex justify-between items-start mb-4">
-                        <div>
-                            <h3 class="text-xl font-bold text-slate-800">${a.title || "Untitled Track"}</h3>
-                            <p class="text-sm text-slate-500 mt-1">Submitted by ${a.by} on ${dateStr}</p>
-                        </div>
-                        <span class="bg-indigo-100 text-indigo-800 text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap ml-4">${a.grade}</span>
-                    </div>
-                    
-                    <div class="mb-4">
-                        <audio controls loop class="w-full">
-                            <source src="${streamUrl}" type="audio/mpeg">
-                            Your browser does not support the audio element.
-                        </audio>
-                    </div>
-
-                    <div class="bg-slate-50 p-4 rounded-lg border border-slate-100 text-sm text-slate-700">
-                        <strong>Description / Benefit:</strong><br>
-                        ${a.description}
-                    </div>
-                </div>
-            `;
-        });
-        feed.innerHTML = html;
-    }
-
-    */
 
     function renderAudioFeed(audioTracks) {
         const feed = document.getElementById('audio-feed');
@@ -497,28 +494,34 @@
         }
 
         let html = '';
-        audioTracks.forEach(a => {
+        audioTracks.forEach((a, index) => {
             const dateStr = new Date(a.timestamp).toLocaleDateString();
+            const safeTitle = (a.title || "Untitled Track").replace(/'/g, "\\'").replace(/"/g, '&quot;');
             
-            // Extract Vimeo ID if present
             let vimeoId = null;
             if (a.link && a.link.includes('vimeo.com')) {
                 vimeoId = a.link.split('/').pop().split('?')[0];
             }
 
-            // Build the appropriate player
             let playerHtml = '';
             if (vimeoId) {
-                 // Compact Vimeo embed for audio tracks
+                 const iframeId = `aud-iframe-${index}`;
+                 const overlayId = `aud-overlay-${index}`;
                  const iframeUrl = `https://player.vimeo.com/video/${vimeoId}?title=0&byline=0&portrait=0&badge=0&dnt=1`;
+                 
                  playerHtml = `
                     <div class="relative w-full rounded-lg overflow-hidden bg-slate-900 border border-slate-200" style="height: 100px;">
-                        <iframe class="absolute top-0 left-0 w-full h-full" src="${iframeUrl}" frameborder="0" allow="autoplay" title="${a.title}"></iframe>
+                        <div id="${overlayId}" class="absolute inset-0 z-10 flex items-center justify-center bg-slate-800 bg-opacity-90 cursor-pointer hover:bg-opacity-80 transition" onclick="activateMedia('${iframeId}', '${overlayId}', '${iframeUrl}', '${safeTitle}')">
+                            <div class="flex items-center text-white bg-teal-600 px-6 py-2 rounded-full shadow-md">
+                                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4l12 6-12 6z"></path></svg>
+                                <span class="font-semibold text-sm">Play Audio & Log</span>
+                            </div>
+                        </div>
+                        <iframe id="${iframeId}" class="absolute top-0 left-0 w-full h-full" src="" frameborder="0" allow="autoplay" title="${safeTitle}"></iframe>
                     </div>`;
             } else {
-                 // Fallback for native audio (in case you use Drive/direct links later)
                  playerHtml = `
-                    <audio controls loop class="w-full">
+                    <audio controls loop class="w-full" onplay="logActivity('${safeTitle}')">
                         <source src="${a.link}" type="audio/mpeg">
                         Your browser does not support the audio element.
                     </audio>`;
@@ -528,7 +531,7 @@
                 <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden fade-in p-6">
                     <div class="flex justify-between items-start mb-4">
                         <div>
-                            <h3 class="text-xl font-bold text-slate-800">${a.title || "Untitled Track"}</h3>
+                            <h3 class="text-xl font-bold text-slate-800">${safeTitle}</h3>
                             <p class="text-sm text-slate-500 mt-1">Submitted by ${a.by} on ${dateStr}</p>
                         </div>
                         <span class="bg-indigo-100 text-indigo-800 text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap ml-4">${a.grade}</span>
