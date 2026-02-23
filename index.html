@@ -69,7 +69,7 @@
                 </div>
                 <h1 class="text-2xl font-bold text-slate-800 mb-2">Secure Sign In</h1>
                 <p class="text-slate-500 mb-8 text-sm leading-relaxed">
-                    Please use your official <strong>@svaschool.org</strong> Workspace account to access the library and submit videos.
+                    Please use your official <strong>@svaschool.org</strong> Workspace account to access the library and submit media.
                 </p>
                 <div class="w-full flex justify-center">
                     <div id="g_id_onload" data-client_id="14216824305-v19ecsmrhk1muaglrlhjceqjk5oeqr4n.apps.googleusercontent.com" data-callback="handleCredentialResponse" data-auto_select="false"></div>
@@ -90,14 +90,16 @@
                 <button onclick="logout()" class="text-sm text-slate-500 hover:text-slate-800 transition">Sign Out</button>
             </div>
             
-            <div class="flex px-2 pt-2 bg-slate-50">
+            <div class="flex px-2 pt-2 bg-slate-50 overflow-x-auto whitespace-nowrap">
                 <button onclick="switchTab('library')" id="tab-btn-library" class="tab-btn active">Video Library</button>
+                <button onclick="switchTab('audio')" id="tab-btn-audio" class="tab-btn">Audio Library</button>
                 <button onclick="switchTab('submit')" id="tab-btn-submit" class="tab-btn">Submit for Approval</button>
             </div>
         </header>
 
         <div id="tab-library" class="fade-in">
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
+                <h2 class="text-lg font-semibold text-slate-800 mb-4">Video Filters</h2>
                 <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-2">
                     <input type="text" id="filter-search" placeholder="Search titles..." class="form-input text-sm" oninput="applyFilters()">
                     <select id="filter-grade" class="form-input text-sm" onchange="applyFilters()">
@@ -130,6 +132,41 @@
             </div>
         </div>
 
+        <div id="tab-audio" class="hidden fade-in">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
+                <h2 class="text-lg font-semibold text-slate-800 mb-4">Audio Filters</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-2">
+                    <input type="text" id="audio-filter-search" placeholder="Search titles..." class="form-input text-sm" oninput="applyAudioFilters()">
+                    <select id="audio-filter-grade" class="form-input text-sm" onchange="applyAudioFilters()">
+                        <option value="">All Grades</option>
+                        <option value="PreK">Pre-K</option>
+                        <option value="Kindergarten">Kindergarten</option>
+                        <option value="1st Grade">1st Grade</option>
+                        <option value="2nd Grade">2nd Grade</option>
+                        <option value="3rd Grade">3rd Grade</option>
+                        <option value="4th Grade">4th Grade</option>
+                        <option value="5th Grade">5th Grade</option>
+                        <option value="6th Grade">6th Grade</option>
+                        <option value="7th Grade">7th Grade</option>
+                        <option value="8th Grade">8th Grade</option>
+                        <option value="PE General">PE General</option>
+                        <option value="Quran General">Quran General</option>
+                        <option value="Islamic Studies General">Islamic Studies General</option>
+                        <option value="Arabic General">Arabic General</option>
+                    </select>
+                    <input type="text" id="audio-filter-by" placeholder="Submitted by (Email)..." class="form-input text-sm" oninput="applyAudioFilters()">
+                    <select id="audio-filter-sort" class="form-input text-sm" onchange="applyAudioFilters()">
+                        <option value="newest">Newest First</option>
+                        <option value="oldest">Oldest First</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="audio-feed" class="space-y-4 pb-10">
+                <div class="text-center py-10 text-slate-500">Loading audio library...</div>
+            </div>
+        </div>
+
         <div id="tab-submit" class="hidden fade-in">
             <div class="bg-white rounded-xl shadow-lg border border-slate-200 p-6 sm:p-8 relative overflow-hidden">
                 <div class="mb-8">
@@ -143,12 +180,12 @@
 
                 <form id="submission-form" onsubmit="submitVideo(event)" class="space-y-5">
                     <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-1">Video Title</label>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">Title</label>
                         <input type="text" id="videoTitle" required placeholder="e.g. Prophets of Islam Episode 1" class="form-input">
                     </div>
                     
                     <div>
-                        <label class="block text-sm font-semibold text-slate-700 mb-1">Video/Audio Link (YouTube, Vimeo, Drive, etc.)</label>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">Media Link (YouTube, Vimeo, Drive, etc.)</label>
                         <input type="url" id="videoLink" required placeholder="https://" class="form-input">
                     </div>
 
@@ -203,7 +240,8 @@
     
     let USER_TOKEN = ""; 
     let USER_EMAIL = "";
-    let ALL_VIDEOS = []; // Stores the fetched videos for filtering
+    let ALL_VIDEOS = []; 
+    let ALL_AUDIO = []; // Stores the fetched audio tracks
 
     // ==========================================
     // AUTH & TABS LOGIC
@@ -232,19 +270,23 @@
     function switchTab(tabName) {
         // Update Buttons
         document.getElementById('tab-btn-library').classList.remove('active');
+        document.getElementById('tab-btn-audio').classList.remove('active');
         document.getElementById('tab-btn-submit').classList.remove('active');
         document.getElementById(`tab-btn-${tabName}`).classList.add('active');
         
         // Update Views
         document.getElementById('tab-library').classList.add('hidden');
+        document.getElementById('tab-audio').classList.add('hidden');
         document.getElementById('tab-submit').classList.add('hidden');
         document.getElementById(`tab-${tabName}`).classList.remove('hidden');
 
+        // Fetch data if needed
         if(tabName === 'library' && ALL_VIDEOS.length === 0) fetchVideos();
+        if(tabName === 'audio' && ALL_AUDIO.length === 0) fetchAudio();
     }
 
     // ==========================================
-    // LIBRARY & VIDEO FEED LOGIC
+    // VIDEO LIBRARY LOGIC
     // ==========================================
     function fetchVideos() {
         fetch(BACKEND_URL, {
@@ -255,7 +297,7 @@
         .then(data => {
             if(data.status === 'success') {
                 ALL_VIDEOS = data.data;
-                applyFilters(); // Renders the initial feed
+                applyFilters(); 
             } else {
                 document.getElementById('video-feed').innerHTML = `<div class="text-red-500 text-center py-10">Error loading videos: ${data.message}</div>`;
             }
@@ -271,7 +313,6 @@
         const byEmail = document.getElementById('filter-by').value.toLowerCase();
         const sortOrder = document.getElementById('filter-sort').value;
 
-        // Filter array
         let filtered = ALL_VIDEOS.filter(v => {
             const matchSearch = v.title.toLowerCase().includes(search) || v.description.toLowerCase().includes(search);
             const matchGrade = grade === "" || v.grade === grade;
@@ -279,7 +320,6 @@
             return matchSearch && matchGrade && matchEmail;
         });
 
-        // Sort array (Assuming timestamp is a valid date string)
         filtered.sort((a, b) => {
             const dateA = new Date(a.timestamp);
             const dateB = new Date(b.timestamp);
@@ -301,7 +341,6 @@
             const embedUrl = getEmbedUrl(v.link);
             const dateStr = new Date(v.timestamp).toLocaleDateString();
             
-            // Build the player (iframe) or a button if we can't embed it
             let mediaSection = '';
             if (embedUrl) {
                 mediaSection = `
@@ -336,28 +375,6 @@
         feed.innerHTML = html;
     }
 
-   /** // Converts standard YouTube/Vimeo links to Embed IFrames
-    function getEmbedUrl(url) {
-        if (!url) return null;
-        try {
-            if (url.includes('vimeo.com')) {
-                // e.g. https://vimeo.com/123456789
-                const vimeoId = url.split('/').pop().split('?')[0];
-                return `https://player.vimeo.com/video/${vimeoId}`;
-            } else if (url.includes('youtube.com') || url.includes('youtu.be')) {
-                let videoId = '';
-                if (url.includes('youtu.be')) {
-                    videoId = url.split('youtu.be/')[1].split('?')[0];
-                } else {
-                    videoId = url.split('v=')[1]?.split('&')[0];
-                }
-                return `https://www.youtube.com/embed/${videoId}`;
-            }
-        } catch(e) { return null; }
-        return null; // Return null if it's a drive link or unknown format
-    } */
-
-    // Converts standard YouTube/Vimeo/PBS links to Embed IFrames
     function getEmbedUrl(url) {
         if (!url) return null;
         try {
@@ -373,11 +390,101 @@
                 }
                 return `https://www.youtube.com/embed/${videoId}`;
             } else if (url.includes('player.pbs.org')) {
-                // Accepts PBS Viral Player links natively
                 return url; 
             }
         } catch(e) { return null; }
-        return null; // Return null if it's a drive link or unknown format
+        return null; 
+    }
+
+    // ==========================================
+    // AUDIO LIBRARY LOGIC
+    // ==========================================
+    function fetchAudio() {
+        fetch(BACKEND_URL, {
+            method: 'POST',
+            body: JSON.stringify({ action: 'getAudio', token: USER_TOKEN })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.status === 'success') {
+                ALL_AUDIO = data.data;
+                applyAudioFilters(); 
+            } else {
+                document.getElementById('audio-feed').innerHTML = `<div class="text-red-500 text-center py-10">Error loading audio: ${data.message}</div>`;
+            }
+        })
+        .catch(err => {
+            document.getElementById('audio-feed').innerHTML = `<div class="text-red-500 text-center py-10">Failed to connect to backend.</div>`;
+        });
+    }
+
+    function applyAudioFilters() {
+        const search = document.getElementById('audio-filter-search').value.toLowerCase();
+        const grade = document.getElementById('audio-filter-grade').value;
+        const byEmail = document.getElementById('audio-filter-by').value.toLowerCase();
+        const sortOrder = document.getElementById('audio-filter-sort').value;
+
+        let filtered = ALL_AUDIO.filter(a => {
+            const matchSearch = a.title.toLowerCase().includes(search) || a.description.toLowerCase().includes(search);
+            const matchGrade = grade === "" || a.grade === grade;
+            const matchEmail = a.by.toLowerCase().includes(byEmail);
+            return matchSearch && matchGrade && matchEmail;
+        });
+
+        filtered.sort((a, b) => {
+            const dateA = new Date(a.timestamp);
+            const dateB = new Date(b.timestamp);
+            return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
+        });
+
+        renderAudioFeed(filtered);
+    }
+
+    function renderAudioFeed(audioTracks) {
+        const feed = document.getElementById('audio-feed');
+        if (audioTracks.length === 0) {
+            feed.innerHTML = `<div class="text-slate-500 text-center py-10 bg-white rounded-xl border border-slate-200">No audio tracks found matching your filters.</div>`;
+            return;
+        }
+
+        let html = '';
+        audioTracks.forEach(a => {
+            const dateStr = new Date(a.timestamp).toLocaleDateString();
+            
+            // Format Google Drive links for direct audio streaming
+            let streamUrl = a.link;
+            if (streamUrl && streamUrl.includes('drive.google.com')) {
+                 const fileId = streamUrl.match(/[-\w]{25,}/);
+                 if (fileId) {
+                     streamUrl = `https://drive.google.com/uc?export=download&id=${fileId[0]}`;
+                 }
+            }
+
+            html += `
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden fade-in p-6">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="text-xl font-bold text-slate-800">${a.title || "Untitled Track"}</h3>
+                            <p class="text-sm text-slate-500 mt-1">Submitted by ${a.by} on ${dateStr}</p>
+                        </div>
+                        <span class="bg-indigo-100 text-indigo-800 text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap ml-4">${a.grade}</span>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <audio controls loop class="w-full">
+                            <source src="${streamUrl}" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+
+                    <div class="bg-slate-50 p-4 rounded-lg border border-slate-100 text-sm text-slate-700">
+                        <strong>Description / Benefit:</strong><br>
+                        ${a.description}
+                    </div>
+                </div>
+            `;
+        });
+        feed.innerHTML = html;
     }
 
     // ==========================================
@@ -398,7 +505,7 @@
 
         fetch(BACKEND_URL, {
             method: 'POST',
-            mode: 'no-cors', // Keeps cross-origin fetch simple, though JSON response won't be readable
+            mode: 'no-cors', 
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 action: 'submit',
@@ -414,7 +521,7 @@
             submitBtn.disabled = false;
             submitBtn.innerHTML = `Submit for Review`;
         }).catch(err => {
-            alert("Issue submitting video. Try again.");
+            alert("Issue submitting media. Try again.");
             submitBtn.disabled = false;
             submitBtn.innerHTML = `Submit for Review`;
         });
