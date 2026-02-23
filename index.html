@@ -500,19 +500,23 @@
         audioTracks.forEach(a => {
             const dateStr = new Date(a.timestamp).toLocaleDateString();
             
+            // Extract Vimeo ID if present
+            let vimeoId = null;
+            if (a.link && a.link.includes('vimeo.com')) {
+                vimeoId = a.link.split('/').pop().split('?')[0];
+            }
+
             // Build the appropriate player
             let playerHtml = '';
-            
-            if (a.link && a.link.includes('drive.google.com')) {
-                 const fileId = a.link.match(/[-\w]{25,}/);
-                 if (fileId) {
-                     // Use Google Drive's native embed player (Most reliable)
-                     playerHtml = `<iframe src="https://drive.google.com/file/d/${fileId[0]}/preview" width="100%" height="100" allow="autoplay" style="border:none; border-radius: 8px;"></iframe>`;
-                 } else {
-                     playerHtml = `<p class="text-red-500 text-sm">Invalid Google Drive link.</p>`;
-                 }
+            if (vimeoId) {
+                 // Compact Vimeo embed for audio tracks
+                 const iframeUrl = `https://player.vimeo.com/video/${vimeoId}?title=0&byline=0&portrait=0&badge=0&dnt=1`;
+                 playerHtml = `
+                    <div class="relative w-full rounded-lg overflow-hidden bg-slate-900 border border-slate-200" style="height: 100px;">
+                        <iframe class="absolute top-0 left-0 w-full h-full" src="${iframeUrl}" frameborder="0" allow="autoplay" title="${a.title}"></iframe>
+                    </div>`;
             } else {
-                 // Fallback to standard audio player for non-Drive links
+                 // Fallback for native audio (in case you use Drive/direct links later)
                  playerHtml = `
                     <audio controls loop class="w-full">
                         <source src="${a.link}" type="audio/mpeg">
@@ -530,7 +534,7 @@
                         <span class="bg-indigo-100 text-indigo-800 text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap ml-4">${a.grade}</span>
                     </div>
                     
-                    <div class="mb-4 bg-slate-50 rounded-lg border border-slate-100 p-2">
+                    <div class="mb-4">
                         ${playerHtml}
                     </div>
 
