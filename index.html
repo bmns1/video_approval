@@ -439,7 +439,7 @@
 
         renderAudioFeed(filtered);
     }
-
+/**
     function renderAudioFeed(audioTracks) {
         const feed = document.getElementById('audio-feed');
         if (audioTracks.length === 0) {
@@ -475,6 +475,63 @@
                             <source src="${streamUrl}" type="audio/mpeg">
                             Your browser does not support the audio element.
                         </audio>
+                    </div>
+
+                    <div class="bg-slate-50 p-4 rounded-lg border border-slate-100 text-sm text-slate-700">
+                        <strong>Description / Benefit:</strong><br>
+                        ${a.description}
+                    </div>
+                </div>
+            `;
+        });
+        feed.innerHTML = html;
+    }
+
+    */
+
+    function renderAudioFeed(audioTracks) {
+        const feed = document.getElementById('audio-feed');
+        if (audioTracks.length === 0) {
+            feed.innerHTML = `<div class="text-slate-500 text-center py-10 bg-white rounded-xl border border-slate-200">No audio tracks found matching your filters.</div>`;
+            return;
+        }
+
+        let html = '';
+        audioTracks.forEach(a => {
+            const dateStr = new Date(a.timestamp).toLocaleDateString();
+            
+            // Build the appropriate player
+            let playerHtml = '';
+            
+            if (a.link && a.link.includes('drive.google.com')) {
+                 const fileId = a.link.match(/[-\w]{25,}/);
+                 if (fileId) {
+                     // Use Google Drive's native embed player (Most reliable)
+                     playerHtml = `<iframe src="https://drive.google.com/file/d/${fileId[0]}/preview" width="100%" height="100" allow="autoplay" style="border:none; border-radius: 8px;"></iframe>`;
+                 } else {
+                     playerHtml = `<p class="text-red-500 text-sm">Invalid Google Drive link.</p>`;
+                 }
+            } else {
+                 // Fallback to standard audio player for non-Drive links
+                 playerHtml = `
+                    <audio controls loop class="w-full">
+                        <source src="${a.link}" type="audio/mpeg">
+                        Your browser does not support the audio element.
+                    </audio>`;
+            }
+
+            html += `
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden fade-in p-6">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="text-xl font-bold text-slate-800">${a.title || "Untitled Track"}</h3>
+                            <p class="text-sm text-slate-500 mt-1">Submitted by ${a.by} on ${dateStr}</p>
+                        </div>
+                        <span class="bg-indigo-100 text-indigo-800 text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap ml-4">${a.grade}</span>
+                    </div>
+                    
+                    <div class="mb-4 bg-slate-50 rounded-lg border border-slate-100 p-2">
+                        ${playerHtml}
                     </div>
 
                     <div class="bg-slate-50 p-4 rounded-lg border border-slate-100 text-sm text-slate-700">
