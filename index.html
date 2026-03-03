@@ -230,7 +230,7 @@
                 <div id="g_id_onload"
                      data-client_id="14216824305-v19ecsmrhk1muaglrlhjceqjk5oeqr4n.apps.googleusercontent.com"
                      data-callback="handleCredentialResponse"
-                     data-auto_select="false"></div>
+                     data-auto_select="true"></div>
                 <div class="g_id_signin"
                      data-type="standard"
                      data-size="large"
@@ -460,6 +460,21 @@
 
 <script>
     // ==========================================
+    // COOKIE HELPERS
+    // ==========================================
+    function setCookie(name, value, days) {
+        const expires = new Date(Date.now() + days * 864e5).toUTCString();
+        document.cookie = name + '=' + encodeURIComponent(value) + ';expires=' + expires + ';path=/;SameSite=Lax';
+    }
+    function getCookie(name) {
+        const match = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+        return match ? decodeURIComponent(match[1]) : null;
+    }
+    function deleteCookie(name) {
+        document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;SameSite=Lax';
+    }
+
+    // ==========================================
     // CONFIGURATION
     // ==========================================
     const BACKEND_URL = "https://script.google.com/macros/s/AKfycbx8p6cMd7o2cgrm8_8PZQihubY6Zj3byGon2227RXfEPb5i2jIH1w7fDsDLHemcMeYn3g/exec";
@@ -468,8 +483,58 @@
     let USER_EMAIL = "";
     let ALL_VIDEOS = [];
     let ALL_AUDIO = [];
-    let activeVimeoPlayers = {}; // Track Vimeo players for background playback
-    let currentFilterContext = 'video'; // Which filter drawer is open
+    let activeVimeoPlayers = {};
+    let currentFilterContext = 'video';
+
+    // ==========================================
+    // COOKIE HELPERS
+    // ==========================================
+    function setCookie(name, value, days) {
+        const d = new Date();
+        d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+        document.cookie = name + "=" + encodeURIComponent(value) + ";expires=" + d.toUTCString() + ";path=/;SameSite=Lax";
+    }
+    function getCookie(name) {
+        const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+        return match ? decodeURIComponent(match[2]) : null;
+    }
+    function deleteCookie(name) {
+        document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;SameSite=Lax";
+    }
+
+    // Check if a JWT token is still valid (not expired)
+    function isTokenValid(token) {
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            // exp is in seconds, Date.now() in ms — add 60s buffer
+            return payload.exp && (payload.exp * 1000) > (Date.now() + 60000);
+        } catch(e) { return false; }
+    }
+
+    // ==========================================
+    // AUTO-LOGIN ON PAGE LOAD
+    // ==========================================
+    function tryAutoLogin() {
+        const savedToken = getCookie('sva_token');
+        const savedEmail = getCookie('sva_email');
+
+        if (savedToken && savedEmail && isTokenValid(savedToken)) {
+            USER_TOKEN = savedToken;
+            USER_EMAIL = savedEmail;
+            document.getElementById('view-login').classList.add('hidden');
+            document.getElementById('view-app').classList.remove('hidden');
+            document.getElementById('user-display').innerText = USER_EMAIL;
+            fetchVideos();
+            return true;
+        }
+        // Clear stale cookies if token expired
+        deleteCookie('sva_token');
+        deleteCookie('sva_email');
+        return false;
+    }
+
+    // Run auto-login as soon as possible
+    tryAutoLogin();
 
     const GRADES = [
         "PreK", "Kindergarten", "1st Grade", "2nd Grade", "3rd Grade",
@@ -524,6 +589,53 @@
     }
 
     // ==========================================
+    // COOKIE HELPERS & AUTO-LOGIN
+    // ==========================================
+    function setCookie(name, value, days) {
+        const d = new Date();
+        d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+        document.cookie = name + "=" + encodeURIComponent(value) + ";expires=" + d.toUTCString() + ";path=/;SameSite=Lax";
+    }
+
+    function getCookie(name) {
+        const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+        return match ? decodeURIComponent(match[2]) : null;
+    }
+
+    function deleteCookie(name) {
+        document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;SameSite=Lax";
+    }
+
+    function isTokenExpired(token) {
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            // exp is in seconds, Date.now() is in ms
+            return (payload.exp * 1000) < Date.now();
+        } catch(e) { return true; }
+    }
+
+    // Check for saved session on page load
+    (function autoLogin() {
+        const savedToken = getCookie('sva_token');
+        if (savedToken && !isTokenExpired(savedToken)) {
+            try {
+                const payload = JSON.parse(atob(savedToken.split('.')[1]));
+                USER_TOKEN = savedToken;
+                USER_EMAIL = payload.email;
+
+                document.getElementById('view-login').classList.add('hidden');
+                document.getElementById('view-app').classList.remove('hidden');
+                document.getElementById('user-display').innerText = USER_EMAIL;
+
+                fetchVideos();
+            } catch(e) {
+                // Corrupted token — clear and show login
+                deleteCookie('sva_token');
+            }
+        }
+    })();
+
+    // ==========================================
     // TRACKING LOGIC
     // ==========================================
     function logActivity(trackTitle) {
@@ -541,15 +653,22 @@
     // ==========================================
     // When a Vimeo player is active, we listen for visibility changes
     // and immediately resume playback if the player was paused by the browser.
-    function registerVimeoPlayer(iframeEl, title) {
+    function registerVimeoPlayer(iframeEl, title, existingPlayer) {
         try {
-            const player = new Vimeo.Player(iframeEl);
+            const player = existingPlayer || new Vimeo.Player(iframeEl);
             const playerId = iframeEl.id;
+
+            // Avoid double-registering
+            if (activeVimeoPlayers[playerId]) return;
+
             activeVimeoPlayers[playerId] = { player, title, wasPlaying: false };
 
-            player.on('play', () => { activeVimeoPlayers[playerId].wasPlaying = true; });
+            // Keep volume at 100% whenever play starts
+            player.on('play', () => {
+                activeVimeoPlayers[playerId].wasPlaying = true;
+                player.setVolume(1).catch(() => {});
+            });
             player.on('pause', () => {
-                // If the page is hidden (screen off / tab switch), force resume
                 if (document.hidden && activeVimeoPlayers[playerId].wasPlaying) {
                     player.play().catch(() => {});
                 } else {
@@ -557,9 +676,7 @@
                 }
             });
             player.on('ended', () => { activeVimeoPlayers[playerId].wasPlaying = false; });
-        } catch(e) {
-            // Vimeo SDK not loaded or other issue - degrade gracefully
-        }
+        } catch(e) {}
     }
 
     // Global visibility change handler - resume all active Vimeo players
@@ -578,14 +695,33 @@
     function activateMedia(iframeId, overlayId, url, title) {
         logActivity(title);
         document.getElementById(overlayId).style.display = 'none';
-        const separator = url.includes('?') ? '&' : '?';
         const iframe = document.getElementById(iframeId);
-        iframe.src = url + separator + 'autoplay=1';
 
-        // Register with Vimeo SDK for background playback
         if (url.includes('vimeo.com')) {
-            // Small delay to let iframe load
-            setTimeout(() => registerVimeoPlayer(iframe, title), 1500);
+            // Load the iframe WITHOUT autoplay — we'll use the SDK to play unmuted
+            // This keeps the user gesture chain intact so the browser allows sound
+            iframe.src = url + (url.includes('?') ? '&' : '?') + 'muted=0';
+
+            // Use Vimeo SDK from within this click handler to start unmuted
+            const initPlayer = () => {
+                try {
+                    const player = new Vimeo.Player(iframe);
+                    player.setVolume(1).catch(() => {});
+                    player.play().then(() => {
+                        // Ensure volume is up after play starts
+                        player.setVolume(1).catch(() => {});
+                    }).catch(() => {});
+                    registerVimeoPlayer(iframe, title, player);
+                } catch(e) {}
+            };
+            // If iframe needs a moment to load the Vimeo player
+            iframe.addEventListener('load', initPlayer, { once: true });
+            // Fallback if load already fired
+            setTimeout(initPlayer, 2000);
+        } else {
+            // YouTube / PBS / others — autoplay as before
+            const separator = url.includes('?') ? '&' : '?';
+            iframe.src = url + separator + 'autoplay=1';
         }
     }
 
@@ -596,6 +732,10 @@
         USER_TOKEN = response.credential;
         const payload = JSON.parse(atob(response.credential.split('.')[1]));
         USER_EMAIL = payload.email;
+
+        // Persist session in cookies (7 days — token will be validated on reload)
+        setCookie('sva_token', USER_TOKEN, 7);
+        setCookie('sva_email', USER_EMAIL, 7);
 
         document.getElementById('view-login').classList.add('hidden');
         document.getElementById('view-app').classList.remove('hidden');
@@ -612,6 +752,10 @@
             try { player.pause(); } catch(e) {}
         });
         activeVimeoPlayers = {};
+
+        // Clear session cookies
+        deleteCookie('sva_token');
+        deleteCookie('sva_email');
 
         USER_TOKEN = "";
         USER_EMAIL = "";
@@ -780,7 +924,7 @@
                 // For Vimeo: add playsinline and loop params for better background behavior
                 let finalUrl = embedUrl;
                 if (embedUrl.includes('vimeo.com')) {
-                    finalUrl += (embedUrl.includes('?') ? '&' : '?') + 'playsinline=1&dnt=1&title=0&byline=0&portrait=0';
+                    finalUrl += (embedUrl.includes('?') ? '&' : '?') + 'playsinline=1&dnt=1&title=0&byline=0&portrait=0&muted=0';
                 }
                 mediaSection = `
                     <div class="video-wrap ratio-16-9">
@@ -910,7 +1054,7 @@
             if (vimeoId) {
                 const iframeId = `aud-iframe-${i}`;
                 const overlayId = `aud-overlay-${i}`;
-                const iframeUrl = `https://player.vimeo.com/video/${vimeoId}?title=0&byline=0&portrait=0&badge=0&dnt=1&playsinline=1`;
+                const iframeUrl = `https://player.vimeo.com/video/${vimeoId}?title=0&byline=0&portrait=0&badge=0&dnt=1&playsinline=1&muted=0`;
                 playerHtml = `
                     <div class="video-wrap ratio-audio">
                         <div id="${overlayId}" class="play-overlay" onclick="activateMedia('${iframeId}', '${overlayId}', '${iframeUrl}', '${safeTitle}')">
